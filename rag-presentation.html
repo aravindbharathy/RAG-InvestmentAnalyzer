@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>RAG POC Presentation - Complete</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background: #e2e8f0;
+      padding: 20px 0;
+    }
+    .top-nav {
+      position: sticky;
+      top: 0;
+      background: #1a4d7a;
+      color: white;
+      padding: 15px 20px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: 700;
+      z-index: 1000;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+    }
+    .slide-wrapper {
+      max-width: 1020px;
+      margin: 0 auto 30px auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+    .slide-label {
+      background: #1a4d7a;
+      color: white;
+      padding: 12px 20px;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .slide {
+      width: 960px;
+      height: 540px;
+      margin: 30px;
+      overflow: hidden;
+    }
+    
+    /* Slide 1: Title */
+    .slide1 {
+      background: linear-gradient(135deg, #0f2f4d 0%, #1a4d7a 50%, #2563a8 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      padding: 0 60px;
+    }
+    .slide1 h1 {
+      font-size: 60px;
+      font-weight: 700;
+      margin: 0 0 20px 0;
+      letter-spacing: -1px;
+      text-align: center;
+    }
+    .slide1 h2 {
+      font-size: 28px;
+      font-weight: 400;
+      margin: 0 0 30px 0;
+      opacity: 0.9;
+      text-align: center;
+    }
+    .slide1 .subtitle {
+      font-size: 18px;
+      opacity: 0.8;
+    }
+    
+    /* Common slide styles */
+    .content-slide {
+      padding: 40px 60px;
+      background: white;
+      color: #1e293b;
+      display: flex;
+      flex-direction: column;
+    }
+    .slide-title {
+      border-left: 6px solid #1a4d7a;
+      padding-left: 20px;
+      margin-bottom: 30px;
+    }
+    .slide-title h2 {
+      font-size: 42px;
+      font-weight: 700;
+      margin: 0;
+      color: #1a4d7a;
+    }
+    .slide-title p {
+      font-size: 20px;
+      margin: 8px 0 0 0;
+      color: #64748b;
+    }
+    
+    /* Slide 2: Executive Summary */
+    .highlight-box {
+      background: #e8f2f7;
+      padding: 24px;
+      border-radius: 8px;
+      border-left: 4px solid #0ea5e9;
+    }
+    .highlight-box h3 {
+      font-size: 22px;
+      font-weight: 700;
+      margin: 0 0 12px 0;
+      color: #1a4d7a;
+    }
+    .highlight-box p {
+      font-size: 18px;
+      margin: 0;
+      line-height: 1.5;
+    }
+    .metrics-row {
+      display: flex;
+      gap: 20px;
+    }
+    .metric-card {
+      flex: 1;
+      background: #f1f5f9;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .metric-value {
+      font-size: 48px;
+      font-weight: 700;
+      margin: 0 0 8px 0;
+    }
+    .metric-label {
+      font-size: 16px;
+      margin: 0;
+      color: #64748b;
+    }
+    
+    /* Slide 3: Problem */
+    .problem-item {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+    .icon-circle {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 32px;
+    }
+    .problem-content h3 {
+      font-size: 22px;
+      font-weight: 700;
+      margin: 0 0 8px 0;
+      color: #1a4d7a;
+    }
+    .problem-content p {
+      font-size: 18px;
+      margin: 0;
+      line-height: 1.5;
+    }
+    
+    /* Slide 4: Solution */
+    .feature-grid {
+      display: flex;
+      gap: 20px;
+    }
+    .feature-card {
+      flex: 1;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      border: 2px solid #cbd5e1;
+    }
+    .feature-icon {
+      background: #dbeafe;
+      width: 50px;
+      height: 50px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+      font-size: 28px;
+    }
+    .feature-card h3 {
+      font-size: 20px;
+      font-weight: 700;
+      margin: 0 0 8px 0;
+      color: #1a4d7a;
+    }
+    .feature-card p {
+      font-size: 16px;
+      margin: 0;
+      line-height: 1.5;
+      color: #64748b;
+    }
+    
+    /* End slide styles */
+    .end-slide {
+      background: linear-gradient(135deg, #0f2f4d 0%, #1a4d7a 50%, #2563a8 100%);
+      color: white;
+      padding: 40px 60px;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .action-box {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      padding: 24px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .action-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .action-number {
+      background: #10b981;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="top-nav">
+    RAG-Powered Investment Intelligence - POC Presentation
+  </div>
+
+  <!-- Slide 1: Title -->
+  <div class="slide-wrapper">
+    <div class="slide-label">Slide 1: Title</div>
+    <div class="slide slide1">
+      <div>
+        <h1>RAG-Powered Investment Intelligence</h1>
+        <h2>Transforming Document Analysis for Investment Professionals</h2>
+        <p class="subtitle">Proof of Concept Proposal</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 2: Executive Summary -->
+  <div class="slide-wrapper">
+    <div class="slide-label">Slide 2: Executive Summary</div>
+    <div class="slide content-slide">
+      <div class="slide-title">
+        <h2>Executive Summary</h2>
+      </div>
+      
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 24px;">
+        <div class="highlight-box">
+          <h3>The Opportunity</h3>
+          <p>Deploy a RAG application to help investment managers analyze SEC filings, earnings transcripts, and financial documents 50% faster while enabling deeper, data-backed insights.</p>
+        </div>
+        
+        <div class="metrics-row">
+          <div class="metric-card">
+            <p class="metric-value" style="color: #10b981;">50%</p>
+            <p class="metric-label">Time Reduction</p>
+          </div>
+          
+          <div class="metric-card">
+            <p class="metric-value" style="color: #0ea5e9;">20hrs</p>
+            <p class="metric-label">Saved Per Week</p>
+          </div>
+          
+          <div class="metric-card">
+            <p class="metric-value" style="color: #f59e0b;">100%</p>
+            <p class="metric-label">Source-Verified</p>
+          </div>
+        </div>
+        
+        <div>
+          <p style="font-size: 18px; line-height: 1.6;"><strong style="color: #1a4d7a;">Bottom Line:</strong> This POC will demonstrate how RAG technology can transform our investment research process, reducing manual document review time while improving insight quality and traceability.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 3: The Problem -->
+  <div class="slide-wrapper">
+    <div class="slide-label">Slide 3: The Problem</div>
+    <div class="slide content-slide">
+      <div class="slide-title">
+        <h2>The Problem</h2>
+        <p>Current investment research is time-intensive and fragmented</p>
+      </div>
+      
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 20px;">
+        <div class="problem-item">
+          <div class="icon-circle" style="background: #fee2e2;">📚</div>
+          <div class="problem-content" style="flex: 1;">
+            <h3>Manual Document Review</h3>
+            <p>Investment analysts spend 20+ hours per week manually reading hundreds of pages across SEC filings, earnings calls, and research reports.</p>
+          </div>
+        </div>
+        
+        <div class="problem-item">
+          <div class="icon-circle" style="background: #fee2e2;">🔍</div>
+          <div class="problem-content" style="flex: 1;">
+            <h3>Limited Search Capabilities</h3>
+            <p>Basic keyword search fails to connect insights across multiple documents or understand context and relationships.</p>
+          </div>
+        </div>
+        
+        <div class="problem-item">
+          <div class="icon-circle" style="background: #fee2e2;">⚖️</div>
+          <div class="problem-content" style="flex: 1;">
+            <h3>Cross-Document Verification</h3>
+            <p>Analysts must manually cross-check data across sources to verify claims and derive comprehensive insights, a tedious and error-prone process.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 4: The Solution -->
+  <div class="slide-wrapper">
+    <div class="slide-label">Slide 4: The Solution</div>
+    <div class="slide content-slide">
+      <div class="slide-title">
+        <h2>The Solution: RAG Application</h2>
+        <p>Intelligent document analysis with source verification</p>
+      </div>
+      
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 18px;">
+        <div style="background: linear-gradient(135deg, #e8f2f7 0%, #f1f5f9 100%); padding: 20px; border-radius: 8px; border-left: 4px solid #0ea5e9;">
+          <p style="font-size: 18px; line-height: 1.6; color: #1e293b;"><strong style="color: #1a4d7a;">Retrieval-Augmented Generation (RAG)</strong> combines AI language models with intelligent document retrieval to answer complex questions with precise, source-backed insights from your investment documents.</p>
+        </div>
+        
+        <div class="feature-grid">
+          <div class="feature-card">
+            <div class="feature-icon">💬</div>
+            <h3>Natural Language Queries</h3>
+            <p>Ask questions in plain English instead of complex searches.</p>
+          </div>
+          
+          <div class="feature-card">
+            <div class="feature-icon">🔗</div>
+            <h3>Cross-Document Analysis</h3>
+            <p>Automatically synthesize insights across multiple sources.</p>
+          </div>
+          
+          <div class="feature-card">
+            <div class="feature-icon">📌</div>
+            <h3>Source Citations</h3>
+            <p>Every insight links back to the exact source document.</p>
+          </div>
+        </div>
+        
+        <div style="background: #dcfce7; padding: 16px 20px; border-radius: 8px; border-left: 4px solid #10b981;">
+          <p style="font-size: 17px; line-height: 1.5; color: #1e293b;"><strong style="color: #047857;">Example Query:</strong> "How has the company's revenue growth compared to industry benchmarks over the past 3 years, and what risks do they identify?"</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 5: Business Impact -->
+  <div class="slide-wrapper">
+    <div class="slide-label">Slide 5: Business Impact</div>
+    <div class="slide content-slide">
+      <div class="slide-title">
+        <h2>Business Impact</h2>
+        <p>Measurable improvements to investment research workflow</p>
+      </div>
+      
+      <div style="flex: 1; display: flex; gap: 20px;">
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 18px;">
+          <div style="background: #dbeafe; padding: 24px; border-radius: 8px; flex: 1;">
+            <h3 style="font-size: 20px; font-weight: 700; margin: 0 0 16px 0; color: #1a4d7a;">Current State</h3>
+            <ul style="margin: 0; padding-left: 20px; font-size: 17px; line-height: 1.8; color: #1e293b;">
+              <li>20 hours/week on document review</li>
+              <li>Manual cross-referencing</li>
+              <li>Limited depth due to time constraints</li>
+              <li>Inconsistent insight quality</li>
+            </ul>
+          </div>
+          
+          <div style="background: #dcfce7; padding: 24px; border-radius: 8px; flex: 1;">
+            <h3 style="font-size: 20px; font-weight: 700; margin: 0 0 16px 0; color: #047857;">Future State</h3>
+            <ul style="margin: 0; padding-left: 20px; font-size: 17px; line-height: 1.8; color: #1e293b;">
+              <li>10 hours/week on document review</li>
+              <li>Automated cross-referencing</li>
+              <li>Deeper analysis enabled</li>
+              <li>Consistent, source-backed insights</li>
+            </ul>
+          </div>
+        </div>
+        
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 16px;">
+          <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 24px; border-radius: 8px; color: white; text-align: center;">
+            <p style="font-size: 64px; font-weight: 700; margin: 0 0 8px 0;">50%</p>
+            <p style="font-size: 20px; margin: 0 0 4px 0; font-weight: 600;">Time Savings</p>
+            <p style="font-size: 16px; margin: 0; opacity: 0.9;">10 hours per analyst per week</p>
+          </div>
+          
+          <div style="background: #f1f5f9; padding: 20px; border-radius: 8px; border: 2px solid #cbd5e1;">
+            <h3 style="font-size: 18px; font-weight: 700; margin: 0 0 12px 0; color: #1a4d7a;">Value Proposition</h3>
+            <ul style="margin: 0; padding-left: 20px; font-size: 16px; line-height: 1.7; color: #1e293b;">
+              <li>Faster decision-making</li>
+              <li>Higher quality insights</li>
+              <li>More comprehensive analysis</li>
+              <li>Scalable research capacity</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 6: Technical Architecture -->
+  <div class="slide-wrapper">
+    <div class="slide-label">Slide 6: Technical Architecture</div>
+    <div class="slide content-slide">
+      <div class="slide-title" style="margin-bottom: 24px;">
+        <h2>Technical Architecture</h2>
+        <p>RAG system design and data flow</p>
+      </div>
+      
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 20px;">
+        <div style="display: flex; gap: 12px; align-items: center; justify-content: space-between;">
+          <div style="flex: 1; background: #dbeafe; padding: 20px; border-radius: 8px; text-align: center; border: 2px solid #0ea5e9;">
+            <p style="font-size: 16px; font-weight: 700; margin: 0 0 8px 0; color: #1a4d7a;">1. Document Ingestion</p>
+            <p style="font-size: 14px; margin: 0; color: #64748b;">PDFs, 10-Ks, Transcripts</p>
+          </div>
+          
+          <div style="font-size: 24px; color: #0ea5e9;">→</div>
+          
+          <div style="flex: 1; background: #dbeafe; padding: 20px; border-radius: 8px; text-align: center; border: 2px solid #0ea5e9;">
+            <p style="font-size: 16px; font-weight: 700; margin: 0 0 8px 0; color: #1a4d7a;">2. Text Processing</p>
+            <p style="font-size: 14px; margin: 0; color: #64748b;">Chunking & Cleaning</p>
+          </div>
+          
+          <div style="font-size: 24px; color: #0ea5e9;">→</div>
+          
+          <div style="flex: 1; background: #dbeafe; padding: 20px; border-radius: 8px; text-align: center; border: 2px solid #0ea5e9;">
+            <p style="font-size: 16px; font-weight: 700; margin: 0 0 8px 0; color: #1a4d7a;">3. Embedding</p>
+            <p style="font-size: 14px; margin: 0; color: #64748b;">Vector Generation</p>
+          </div>
+          
+          <div style="font-size: 24px; color: #0ea5e9;">→</div>
+          
+          <div style="flex: 1; background: #dbeafe; padding: 20px; border-radius: 8px; text-align: center; border: 2px solid #0ea5e9;">
+            <p style="font-size: 16px; font-weight: 700; margin: 0 0 8px 0; color: #1a4d7a;">4. Vector Store</p>
+            <p style="font-size: 14px; margin: 0; color: #64748b;">Indexed Storage</p>
+          </div>
+        </div>
+        
+        <div style="background: #f1f5f9; padding: 24px; border-radius: 8px; border: 2px solid #cbd5e1;">
+          <h3 style="font-size: 20px; font-weight: 700; margin: 0 0 16px 0; color: #1a4d7a;">Query Process</h3>
+          <div style="display: flex; gap: 16px;">
+            <div style="flex: 1;">
+              <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid #10b981;">
+                <p style="font-size: 15px; font-weight: 700; margin: 0 0 6px 0; color: #047857;">User Query</p>
+                <p style="font-size: 14px; margin: 0; color: #64748b;">"What are the key revenue drivers?"</p>
+              </div>
+              <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid #0ea5e9;">
+                <p style="font-size: 15px; font-weight: 700; margin: 0 0 6px 0; color: #1a4d7a;">Semantic Search</p>
+                <p style="font-size: 14px; margin: 0; color: #64748b;">Retrieve relevant document chunks</p>
+              </div>
+            </div>
+            <div style="flex: 1;">
+              <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid #f59e0b;">
+                <p style="font-size: 15px; font-weight: 700; margin: 0 0 6px 0; color: #b45309;">Context Assembly</p>
+                <p style="font-size: 14px; margin: 0; color: #64748b;">Combine query + retrieved chunks</p>
+              </div>
+              <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid #7c3aed;">
+                <p style="font-size: 15px; font-weight: 700; margin: 0 0 6px 0; color: #6d28d9;">LLM Generation</p>
+                <p style="font-size: 14px; margin: 0; color: #64748b;">Generate answer with citations</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div style="display: flex; gap: 12px;">
+          <div style="flex: 1; background: #e8f2f7; padding: 16px; border-radius: 8px;">
+            <p style="font-size: 15px; font-weight: 700; margin: 0 0 6px 0; color: #1a4d7a;">Tech Stack</p>
+            <p style="font-size: 14px; margin: 0; color: #64748b;">LangChain, OpenAI/Claude, Pinecone/Weaviate, Python</p>
+          </div>
+          <div style="flex: 1; background: #e8f2f7; padding: 16px; border-radius: 8px;">
+            <p style="font-size: 15px; font-weight: 700; margin: 0 0 6px 0; color: #1a4d7a;">Security</p>
+            <p style="font-size: 14px; margin: 0; color: #64748b;">Enterprise-grade encryption, access controls, audit logs</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 7: Document Coverage -->
+  <div class="slide-wrapper">
+    <div class="slide-label">Slide 7: Document Coverage</div>
+    <div class="slide content-slide">
+      <div class="slide-title">
+        <h2>Document Coverage</h2>
+        <p>Comprehensive financial document analysis</p>
+      </div>
+      
+      <div style="flex: 1; display: flex; gap: 20px;">
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 16px;">
+          <div style="background: #dbeafe; padding: 20px; border-radius: 8px; border-left: 4px solid #0ea5e9;">
+            <h3 style="font-size: 20px; font-weight: 700; margin: 0 0 12px 0; color: #1a4d7a;">SEC Filings</h3>
+            <ul style="margin: 0; padding-left: 20px; font-size: 16px; line-height: 1.7; color: #1e293b;">
+              <li>10-K Annual Reports</li>
+              <li>10-Q Quarterly Reports</li>
+              <li>8-K Current Reports</li>
+              <li>Proxy Statements</li>
+            </ul>
+          </div>
+          
+          <div style="background: #dcfce7; padding: 20px; border-radius: 8px; border-left: 4px solid #10b981;">
+            <h3 style="font-size: 20px; font-weight: 700; margin: 0 0 12px 0; color: #047857;">Earnings Materials</h3>
+            <ul style="margin: 0; padding-left: 20px; font-size: 16px; line-height: 1.7; color: #1e293b;">
+              <li>Earnings Call Transcripts</li>
+              <li>Presentation Slides</li>
+              <li>Press Releases</li>
+              <li>Q&A Summaries</li>
+            </ul>
+          </div>
+          
+          <div style="background: #fef3c7; padding: 20px; border-radius: 8px; border-left: 4px solid #f59e0b;">
+            <h3 style="font-size: 20px; font-weight: 700; margin: 0 0 12px 0; color: #b45309;">Financial Statements</h3>
+            <ul style="margin: 0; padding-left: 20px; font-size: 16px; line-height: 1.7; color: #1e293b;">
+              <li>Balance Sheets</li>
+              <li>Income Statements</li>
+              <li>Cash Flow Statements</li>
+            </ul>
+          </div>
+        </div>
+        
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 16px;">
+          <div style="background: #e0e7ff; padding: 20px; border-radius: 8px; border-left: 4px solid #6366f1;">
+            <h3 style="font-size: 20px; font-weight: 700; margin: 0 0 12px 0; color: #4338ca;">Research Reports</h3>
+            <ul style="margin: 0; padding-left: 20px; font-size: 16px; line-height: 1.7; color: #1e293b;">
+              <li>Analyst Reports</li>
+              <li>Industry Research</li>
+              <li>Competitive Analysis</li>
+              <li>Market Commentary</li>
+            </ul>
+          </div>
+          
+          <div style="background: #fce7f3; padding: 20px; border-radius: 8px; border-left: 4px solid #ec4899;">
+            <h3 style="font-size: 20px; font-weight: 700; margin: 0 0 12px 0; color: #be185d;">News & Media</h3>
+            <ul style="margin: 0; padding-left: 20px; font-size: 16px; line-height: 1.7; color: #1e293b;">
+              <li>Financial News Articles</li>
+              <li>Industry Publications</li>
+              <li>Company Announcements</li>
+            </ul>
+          </div>
+          
+          <div style="background: linear-gradient(135deg, #1a4d7a 0%, #2563a8 100%); padding: 24px; border-radius: 8px; color: white; text-align: center;">
+            <p style="font-size: 18px; font-weight: 700; margin: 0 0 8px 0;">Unified Search</p>
+            <p style="font-size: 15px; margin: 0; line-height: 1.5; opacity: 0.95;">Query across all document types simultaneously for comprehensive insights</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 8: Key Features -->
+  <div class="slide-wrapper">
+    <div class="slide-label">Slide 8: Key Features</div>
+    <div class="slide content-slide">
+      <div class="slide-title">
+        <h2>Key Features</h2>
+        <p>What sets our RAG application apart</p>
+      </div>
+      
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 16px;">
+        <div style="display: flex; gap: 16px;">
+          <div style="flex: 1; background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%); padding: 20px; border-radius: 8px; border: 2px solid #0ea5e9;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+              <div style="background: white; width: 44px; height: 44px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 24px;">🎯</div>
+              <h3 style="font-size: 20px; font-weight: 700; margin: 0; color: #1a4d7a;">Semantic Understanding</h3>
+            </div>
+            <p style="font-size: 16px; margin: 0; line-height: 1.6; color: #1e293b;">Goes beyond keyword matching to understand context, relationships, and intent in complex financial documents.</p>
+          </div>
+          
+          <div style="flex: 1; background: linear-gradient(135deg, #dcfce7 0%, #d1fae5 100%); padding: 20px; border-radius: 8px; border: 2px solid #10b981;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+              <div style="background: white; width: 44px; height: 44px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 24px;">📊</div>
+              <h3 style="font-size: 20px; font-weight: 700; margin: 0; color: #047857;">Multi-Source Synthesis</h3>
+            </div>
+            <p style="font-size: 16px; margin: 0; line-height: 1.6; color: #1e293b;">Automatically correlates information across multiple documents to provide comprehensive, holistic answers.</p>
+          </div>
+        </div>
+        
+        <div style="display: flex; gap: 16px;">
+          <div style="flex: 1; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 20px; border-radius: 8px; border: 2px solid #f59e0b;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+              <div style="background: white; width: 44px; height: 44px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 24px;">✅</div>
+              <h3 style="font-size: 20px; font-weight: 700; margin: 0; color: #b45309;">Source Attribution</h3>
+            </div>
+            <p style="font-size: 16px; margin: 0; line-height: 1.6; color: #1e293b;">Every insight includes direct links to source documents and specific page references for verification.</p>
+          </div>
+          
+          <div style="flex: 1; background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%); padding: 20px; border-radius: 8px; border: 2px solid #ec4899;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+              <div style="background: white; width: 44px; height: 44px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 24px;">⚡</div>
+              <h3 style="font-size: 20px; font-weight: 700; margin: 0; color: #be185d;">Real-Time Queries</h3>
+            </div>
+            <p style="font-size: 16px; margin: 0; line-height: 1.6; color: #1e293b;">Get answers in seconds, not hours, enabling faster decision-making and more responsive analysis.</p>
+          </div>
+        </div>
+        
+        <div style="display: flex; gap: 16px;">
+          <div style="flex: 1; background: linear-gradient(135deg, #e0e7ff 0%, #ddd6fe 100%); padding: 20px; border-radius: 8px; border: 2px solid #6366f1;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+              <div style="background: white; width: 44px; height: 44px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 24px;">🔄</div>
+              <h3 style="font-size: 20px; font-weight: 700; margin: 0; color: #4338ca;">Continuous Learning</h3>
+            </div>
+            <p style="font-size: 16px; margin: 0; line-height: 1.6; color: #1e293b;">System improves over time as new documents are added and user feedback refines results.</p>
+          </div>
+          
+          <div style="flex: 1; background: linear-gradient(135deg, #e8f2f7 0%, #dbeafe 100%); padding: 20px; border-radius: 8px; border: 2px solid #1a4d7a;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+              <div style="background: white; width: 44px; height: 44px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 24px;">🔒</div>
+              <h3 style="font-size: 20px; font-weight: 700; margin: 0; color: #1a4d7a;">Enterprise Security</h3>
+            </div>
+            <p style="font-size: 16px; margin: 0; line-height: 1.6; color: #1e293b;">Role-based access controls and encryption ensure sensitive investment data remains secure.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 9: POC Plan -->
+  <div class="slide-wrapper">
+    <div class="slide-label">Slide 9: POC Plan</div>
+    <div class="slide content-slide">
+      <div class="slide-title">
+        <h2>Proof of Concept Plan</h2>
+        <p>Production-ready POC with clear success criteria</p>
+      </div>
+      
+      <div style="flex: 1; display: flex; gap: 20px;">
+        <div style="flex: 1.2; display: flex; flex-direction: column; gap: 14px;">
+          <div style="background: #dbeafe; padding: 18px 20px; border-radius: 8px; display: flex; align-items: flex-start; gap: 16px;">
+            <div style="background: #0ea5e9; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; font-size: 18px;">1</div>
+            <div style="flex: 1;">
+              <h3 style="font-size: 18px; font-weight: 700; margin: 0 0 6px 0; color: #1a4d7a;">Data Preparation</h3>
+              <p style="font-size: 15px; margin: 0; line-height: 1.5; color: #1e293b;">Collect and process sample documents for 3-5 investment targets</p>
+            </div>
+          </div>
+          
+          <div style="background: #dbeafe; padding: 18px 20px; border-radius: 8px; display: flex; align-items: flex-start; gap: 16px;">
+            <div style="background: #0ea5e9; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; font-size: 18px;">2</div>
+            <div style="flex: 1;">
+              <h3 style="font-size: 18px; font-weight: 700; margin: 0 0 6px 0; color: #1a4d7a;">System Development</h3>
+              <p style="font-size: 15px; margin: 0; line-height: 1.5; color: #1e293b;">Build RAG pipeline with embedding, retrieval, and generation components</p>
+            </div>
+          </div>
+          
+          <div style="background: #dbeafe; padding: 18px 20px; border-radius: 8px; display: flex; align-items: flex-start; gap: 16px;">
+            <div style="background: #0ea5e9; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; font-size: 18px;">3</div>
+            <div style="flex: 1;">
+              <h3 style="font-size: 18px; font-weight: 700; margin: 0 0 6px 0; color: #1a4d7a;">User Testing</h3>
+              <p style="font-size: 15px; margin: 0; line-height: 1.5; color: #1e293b;">Deploy to 3-5 analysts for real-world testing with actual investment scenarios</p>
+            </div>
+          </div>
+          
+          <div style="background: #dbeafe; padding: 18px 20px; border-radius: 8px; display: flex; align-items: flex-start; gap: 16px;">
+            <div style="background: #0ea5e9; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; font-size: 18px;">4</div>
+            <div style="flex: 1;">
+              <h3 style="font-size: 18px; font-weight: 700; margin: 0 0 6px 0; color: #1a4d7a;">Evaluation & Refinement</h3>
+              <p style="font-size: 15px; margin: 0; line-height: 1.5; color: #1e293b;">Measure time savings, accuracy, and gather user feedback for improvements</p>
+            </div>
+          </div>
+        </div>
+        
+        <div style="flex: 0.8; display: flex; flex-direction: column; gap: 16px;">
+          <div style="background: #dcfce7; padding: 20px; border-radius: 8px; border: 2px solid #10b981;">
+            <h3 style="font-size: 18px; font-weight: 700; margin: 0 0 12px 0; color: #047857;">Success Metrics</h3>
+            <ul style="margin: 0; padding-left: 20px; font-size: 15px; line-height: 1.8; color: #1e293b;">
+              <li>50% reduction in research time</li>
+              <li>90%+ answer accuracy</li>
+              <li>100% source attribution</li>
+              <li>Positive user feedback</li>
+            </ul>
+          </div>
+          
+          <div style="background: #fef3c7; padding: 20px; border-radius: 8px; border: 2px solid #f59e0b;">
+            <h3 style="font-size: 18px; font-weight: 700; margin: 0 0 12px 0; color: #b45309;">Timeline</h3>
+            <ul style="margin: 0; padding-left: 20px; font-size: 15px; line-height: 1.8; color: #1e293b;">
+              <li>Week 1-2: Data prep</li>
+              <li>Week 3-5: Development</li>
+              <li>Week 6-8: User testing</li>
+              <li>Week 9: Evaluation</li>
+            </ul>
+          </div>
+          
+          <div style="background: linear-gradient(135deg, #1a4d7a 0%, #2563a8 100%); padding: 20px; border-radius: 8px; color: white; text-align: center;">
+            <p style="font-size: 28px; font-weight: 700; margin: 0 0 4px 0;">9 Weeks</p>
+            <p style="font-size: 15px; margin: 0;">To Production-Ready System</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 10: Risk Mitigation -->
+  <div class="slide-wrapper">
+    <div class="slide-label">Slide 10: Risk Mitigation</div>
+    <div class="slide content-slide">
+      <div class="slide-title">
+        <h2>Risk Mitigation</h2>
+        <p>Proactive measures to ensure POC success</p>
+      </div>
+      
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 16px;">
+        <div style="display: flex; gap: 16px;">
+          <div style="flex: 1; background: #fef2f2; padding: 20px; border-radius: 8px; border-left: 4px solid #ef4444;">
+            <h3 style="font-size: 18px; font-weight: 700; margin: 0 0 8px 0; color: #dc2626;">Risk: Inaccurate Responses</h3>
+            <p style="font-size: 15px; margin: 0 0 12px 0; color: #64748b; line-height: 1.6;">AI might generate incorrect or misleading information</p>
+            <div style="background: white; padding: 12px; border-radius: 6px;">
+              <p style="font-size: 14px; font-weight: 700; margin: 0 0 6px 0; color: #047857;">Mitigation:</p>
+              <ul style="margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.7; color: #1e293b;">
+                <li>Mandatory source citations</li>
+                <li>Confidence scoring</li>
+                <li>Human review workflow</li>
+              </ul>
+            </div>
+          </div>
+          
+          <div style="flex: 1; background: #fef2f2; padding: 20px; border-radius: 8px; border-left: 4px solid #ef4444;">
+            <h3 style="font-size: 18px; font-weight: 700; margin: 0 0 8px 0; color: #dc2626;">Risk: Data Privacy Concerns</h3>
+            <p style="font-size: 15px; margin: 0 0 12px 0; color: #64748b; line-height: 1.6;">Sensitive investment data could be exposed</p>
+            <div style="background: white; padding: 12px; border-radius: 6px;">
+              <p style="font-size: 14px; font-weight: 700; margin: 0 0 6px 0; color: #047857;">Mitigation:</p>
+              <ul style="margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.7; color: #1e293b;">
+                <li>On-premise deployment option</li>
+                <li>End-to-end encryption</li>
+                <li>Role-based access controls</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        
+        <div style="display: flex; gap: 16px;">
+          <div style="flex: 1; background: #fef2f2; padding: 20px; border-radius: 8px; border-left: 4px solid #ef4444;">
+            <h3 style="font-size: 18px; font-weight: 700; margin: 0 0 8px 0; color: #dc2626;">Risk: Low User Adoption</h3>
+            <p style="font-size: 15px; margin: 0 0 12px 0; color: #64748b; line-height: 1.6;">Analysts may resist changing workflows</p>
+            <div style="background: white; padding: 12px; border-radius: 6px;">
+              <p style="font-size: 14px; font-weight: 700; margin: 0 0 6px 0; color: #047857;">Mitigation:</p>
+              <ul style="margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.7; color: #1e293b;">
+                <li>Intuitive user interface</li>
+                <li>Training and onboarding</li>
+                <li>Early user involvement</li>
+              </ul>
+            </div>
+          </div>
+          
+          <div style="flex: 1; background: #fef2f2; padding: 20px; border-radius: 8px; border-left: 4px solid #ef4444;">
+            <h3 style="font-size: 18px; font-weight: 700; margin: 0 0 8px 0; color: #dc2626;">Risk: Technical Complexity</h3>
+            <p style="font-size: 15px; margin: 0 0 12px 0; color: #64748b; line-height: 1.6;">System may be difficult to maintain or scale</p>
+            <div style="background: white; padding: 12px; border-radius: 6px;">
+              <p style="font-size: 14px; font-weight: 700; margin: 0 0 6px 0; color: #047857;">Mitigation:</p>
+              <ul style="margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.7; color: #1e293b;">
+                <li>Use proven frameworks</li>
+                <li>Comprehensive documentation</li>
+                <li>Modular architecture</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        
+        <div style="background: #dcfce7; padding: 20px; border-radius: 8px; border: 2px solid #10b981; text-align: center;">
+          <p style="font-size: 17px; margin: 0; line-height: 1.6; color: #1e293b;"><strong style="color: #047857;">Risk Management Approach:</strong> Continuous monitoring, user feedback loops, and iterative improvements throughout the POC phase</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 11: Next Steps -->
+  <div class="slide-wrapper">
+    <div class="slide-label">Slide 11: Next Steps</div>
+    <div class="slide end-slide">
+      <div class="slide-title" style="border-left: 6px solid white;">
+        <h2 style="color: white;">Next Steps</h2>
+        <p style="opacity: 0.9;">Ready to transform investment research</p>
+      </div>
+      
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 20px;">
+        <div class="action-box">
+          <h3 style="font-size: 22px; font-weight: 700; margin: 0 0 16px 0;">Immediate Actions</h3>
+          <div style="display: flex; gap: 20px;">
+            <div style="flex: 1;">
+              <div class="action-item">
+                <div class="action-number">1</div>
+                <p style="margin: 0; font-size: 17px; font-weight: 600;">Approve POC Budget</p>
+              </div>
+              <p style="margin: 0 0 0 44px; font-size: 15px; line-height: 1.6; opacity: 0.9;">Allocate resources for 9-week development and testing phase</p>
+            </div>
+            
+            <div style="flex: 1;">
+              <div class="action-item">
+                <div class="action-number">2</div>
+                <p style="margin: 0; font-size: 17px; font-weight: 600;">Form Project Team</p>
+              </div>
+              <p style="margin: 0 0 0 44px; font-size: 15px; line-height: 1.6; opacity: 0.9;">Identify technical leads and analyst participants for testing</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="action-box">
+          <div style="display: flex; gap: 20px;">
+            <div style="flex: 1;">
+              <div class="action-item">
+                <div class="action-number" style="background: #0ea5e9;">3</div>
+                <p style="margin: 0; font-size: 17px; font-weight: 600;">Select Test Cases</p>
+              </div>
+              <p style="margin: 0 0 0 44px; font-size: 15px; line-height: 1.6; opacity: 0.9;">Choose 3-5 investment targets with diverse document sets</p>
+            </div>
+            
+            <div style="flex: 1;">
+              <div class="action-item">
+                <div class="action-number" style="background: #0ea5e9;">4</div>
+                <p style="margin: 0; font-size: 17px; font-weight: 600;">Kickoff Meeting</p>
+              </div>
+              <p style="margin: 0 0 0 44px; font-size: 15px; line-height: 1.6; opacity: 0.9;">Schedule project kickoff within 2 weeks of approval</p>
+            </div>
+          </div>
+        </div>
+        
+        <div style="background: white; padding: 28px; border-radius: 8px; text-align: center;">
+          <p style="font-size: 24px; font-weight: 700; margin: 0 0 12px 0; color: #1a4d7a;">The Investment Research Revolution Starts Now</p>
+          <p style="font-size: 18px; margin: 0; color: #64748b; line-height: 1.6;">Let's build a system that empowers our analysts to make faster, better-informed investment decisions.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align: center; padding: 40px 20px; color: #64748b;">
+    <p style="margin: 0; font-size: 18px; font-weight: 600;">End of Presentation</p>
+    <p style="margin: 8px 0 0 0; font-size: 14px;">11 Slides | RAG-Powered Investment Intelligence POC</p>
+  </div>
+</body>
+</html>

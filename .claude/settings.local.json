@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__ide__getDiagnostics",
+      "Bash(npm prefix:*)",
+      "Bash(sudo chown:*)",
+      "Bash(claude --version)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm install:*)",
+      "Bash(npm cache clean:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
