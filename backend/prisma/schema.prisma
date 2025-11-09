@@ -1,0 +1,181 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum DocumentStatus {
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum DocumentType {
+  FILING_10K
+  FILING_10Q
+  FILING_8K
+  EARNINGS_TRANSCRIPT
+  ANALYST_REPORT
+  FINANCIAL_STATEMENT
+  OTHER
+}
+
+// ==========================================
+// MODELS
+// ==========================================
+
+model Company {
+  id          String     @id @default(uuid())
+  name        String
+  ticker      String     @unique
+  sector      String?
+  industry    String?
+  description String?    @db.Text
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  documents   Document[]
+
+  @@index([ticker])
+  @@index([sector])
+}
+
+model Document {
+  id               String         @id @default(uuid())
+  filename         String
+  originalFilename String
+  fileUrl          String         // S3 URL or local path
+  fileSize         Int            // in bytes
+  mimeType         String
+
+  status           DocumentStatus @default(QUEUED)
+  documentType     DocumentType
+
+  companyId        String
+  company          Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  // Metadata
+  filingDate       DateTime?
+  fiscalYear       Int?
+  fiscalQuarter    Int?           // 1-4 for Q1-Q4
+
+  // Processing
+  chunksCount      Int            @default(0)
+  processingError  String?        @db.Text
+  processingStartedAt DateTime?
+  processingCompletedAt DateTime?
+
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  chunks           DocumentChunk[]
+  citations        Citation[]
+
+  @@index([companyId])
+  @@index([status])
+  @@index([documentType])
+  @@index([filingDate])
+}
+
+model DocumentChunk {
+  id               String   @id @default(uuid())
+  documentId       String
+  document         Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  text             String   @db.Text
+  chunkIndex       Int      // Sequential order in document
+
+  // Position metadata
+  pageNumber       Int?
+  section          String?
+
+  // LanceDB integration
+  lanceId          String   @unique  // ID used in LanceDB table
+  embeddingStored  Boolean  @default(false)
+
+  // Token counts (for tracking)
+  tokenCount       Int?
+
+  createdAt        DateTime @default(now())
+
+  citations        Citation[]
+
+  @@index([documentId])
+  @@index([lanceId])
+  @@index([embeddingStored])
+}
+
+model Query {
+  id              String    @id @default(uuid())
+  queryText       String    @db.Text
+
+  // Filters applied
+  companyFilter   String?   // Company ticker
+  documentTypes   String[]  // Array of DocumentType values
+  dateFrom        DateTime?
+  dateTo          DateTime?
+
+  // User tracking (for future multi-user support)
+  userId          String?
+
+  createdAt       DateTime  @default(now())
+
+  result          QueryResult?
+
+  @@index([userId])
+  @@index([companyFilter])
+  @@index([createdAt])
+}
+
+model QueryResult {
+  id                String     @id @default(uuid())
+  queryId           String     @unique
+  query             Query      @relation(fields: [queryId], references: [id], onDelete: Cascade)
+
+  answer            String     @db.Text
+  processingTimeMs  Int        // Total time to process query
+
+  // Performance metrics
+  embeddingTimeMs   Int?
+  searchTimeMs      Int?
+  llmTimeMs         Int?
+
+  chunksRetrieved   Int        @default(0)
+
+  createdAt         DateTime   @default(now())
+
+  citations         Citation[]
+
+  @@index([queryId])
+}
+
+model Citation {
+  id                String        @id @default(uuid())
+  queryResultId     String
+  queryResult       QueryResult   @relation(fields: [queryResultId], references: [id], onDelete: Cascade)
+
+  documentId        String
+  document          Document      @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  chunkId           String
+  chunk             DocumentChunk @relation(fields: [chunkId], references: [id], onDelete: Cascade)
+
+  // Citation metadata
+  relevanceScore    Float         // Similarity score from ChromaDB
+  citationIndex     Int           // Order in the answer [1], [2], etc.
+  excerptText       String        @db.Text  // Snippet shown to user
+
+  createdAt         DateTime      @default(now())
+
+  @@index([queryResultId])
+  @@index([documentId])
+  @@index([chunkId])
+}

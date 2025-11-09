@@ -6,9 +6,9 @@
 **Backend:** Express.js (Node.js, TypeScript)
 **ORM:** Prisma
 **Database:** PostgreSQL
-**Vector Database:** ChromaDB
-**LLM:** OpenAI GPT-4o / Anthropic Claude
-**File Storage:** AWS S3 / Vercel Blob
+**Vector Database:** LanceDB (Embedded)
+**LLM:** Grok (xAI) + OpenAI (embeddings only)
+**File Storage:** Local/AWS S3
 **Job Queue:** Bull (Redis-based)
 
 ---
@@ -28,24 +28,27 @@ graph TB
 
     subgraph "Data Layer"
         PG[(PostgreSQL<br/>Metadata & Relations)]
-        Chroma[(ChromaDB<br/>Vector Embeddings)]
+        Lance[(LanceDB<br/>Vector Embeddings<br/>Embedded)]
         S3[S3 Storage<br/>Raw Documents]
         Redis[(Redis<br/>Queue & Cache)]
     end
 
     subgraph "External Services"
-        OpenAI[OpenAI API<br/>Embeddings & LLM]
+        Grok[Grok API<br/>LLM]
+        OpenAI[OpenAI API<br/>Embeddings]
     end
 
     UI -->|HTTP/REST| API
     API --> Queue
     Queue --> Redis
     API --> PG
-    API --> Chroma
+    API --> Lance
     API --> S3
+    API --> Grok
     API --> OpenAI
     Queue --> PG
-    Queue --> Chroma
+    Queue --> Lance
+    Queue --> Grok
     Queue --> OpenAI
 ```
 
@@ -111,13 +114,14 @@ graph TB
   - User data, Processing status
 - **Access:** Via Prisma ORM
 
-### ChromaDB
+### LanceDB
 - **Purpose:** Vector similarity search
 - **Stores:**
   - Embeddings (1536-dimensional vectors)
   - Metadata (company, document type, etc.)
   - Chunk text (duplicated for quick retrieval)
-- **Deployment:** Self-hosted on Railway/Docker
+- **Deployment:** Embedded (no separate server needed)
+- **Advantages:** Simpler deployment, no Docker, lower latency
 
 ### Redis
 - **Purpose:** Job queue and caching
@@ -139,7 +143,7 @@ sequenceDiagram
     participant S3
     participant PG as PostgreSQL
     participant Worker
-    participant Chroma as ChromaDB
+    participant Lance as LanceDB
     participant OpenAI
 
     User->>Frontend: Upload PDF
@@ -157,7 +161,7 @@ sequenceDiagram
     Worker->>PG: Store chunks
     Worker->>OpenAI: Generate embeddings (batch)
     OpenAI-->>Worker: Return vectors
-    Worker->>Chroma: Store embeddings + metadata
+    Worker->>Lance: Store embeddings + metadata
     Worker->>PG: Update status: COMPLETED
 
     Frontend->>API: GET /api/documents/{id}/status
@@ -172,10 +176,10 @@ sequenceDiagram
 2. **Extract (5-10s):** Parse PDF, extract text and metadata
 3. **Chunk (2-3s):** Split into 512-1024 token chunks with overlap
 4. **Embed (30-45s):** Generate vectors via OpenAI (batched)
-5. **Store (2-5s):** Save to ChromaDB with metadata
+5. **Store (1-2s):** Save to LanceDB with metadata (embedded, faster)
 6. **Complete:** Update PostgreSQL status
 
-**Total Time:** 40-65 seconds (runs in background)
+**Total Time:** 40-60 seconds (runs in background)
 
 ---
 
@@ -187,20 +191,21 @@ sequenceDiagram
     participant Frontend
     participant API as Express API
     participant OpenAI
-    participant Chroma as ChromaDB
+    participant Lance as LanceDB
     participant PG as PostgreSQL
+    participant Grok
 
     User->>Frontend: "What are Tesla's revenue drivers?"
     Frontend->>API: POST /api/query
     API->>PG: Log query
     API->>OpenAI: Generate query embedding
     OpenAI-->>API: Vector [0.15, -0.23, ...]
-    API->>Chroma: Semantic search<br/>(top 5 chunks)
-    Chroma-->>API: Relevant chunks + metadata
+    API->>Lance: Semantic search<br/>(top 5 chunks)
+    Lance-->>API: Relevant chunks + metadata
     API->>PG: Fetch full chunk details
     API->>API: Assemble context + prompt
-    API->>OpenAI: Generate answer (GPT-4o)
-    OpenAI-->>API: Answer with citations
+    API->>Grok: Generate answer (grok-beta)
+    Grok-->>API: Answer with citations
     API->>PG: Store query result + citations
     API-->>Frontend: {answer, citations, sources}
     Frontend-->>User: Display answer with clickable citations
@@ -209,10 +214,10 @@ sequenceDiagram
 ### Performance
 
 - **Query Embedding:** 200ms
-- **ChromaDB Search:** 50-100ms
+- **LanceDB Search:** 20-50ms (embedded, lower latency)
 - **PostgreSQL Fetch:** 10-20ms
-- **LLM Generation:** 2-3 seconds
-- **Total:** ~3 seconds end-to-end
+- **LLM Generation (Grok):** 2-3 seconds
+- **Total:** ~2.5-3 seconds end-to-end
 
 ---
 
@@ -272,7 +277,7 @@ model DocumentChunk {
   pageNumber      Int?
   section         String?
 
-  chromaId        String      @unique    // Links to ChromaDB
+  lanceId         String      @unique    // Links to LanceDB
   embeddingStored Boolean     @default(false)
 }
 
@@ -296,34 +301,32 @@ model QueryResult {
 
 ---
 
-## ChromaDB Structure
+## LanceDB Structure
 
 ```typescript
-// Collection: "investment_documents"
+// Table: "investment_documents"
 
 {
-  ids: ["chunk_uuid_123"],
-  embeddings: [[0.123, -0.456, 0.789, ...]],  // 1536 dims
-  metadatas: [{
-    documentId: "doc_uuid_456",
-    documentName: "Tesla_10K_2023.pdf",
-    company: "Tesla Inc",
-    ticker: "TSLA",
-    documentType: "FILING_10K",
-    fiscalYear: 2023,
-    pageNumber: 45,
-    section: "Management Discussion & Analysis",
-    chunkIndex: 12
-  }],
-  documents: ["Tesla's revenue for fiscal year 2023..."]
+  id: "chunk_uuid_123",
+  text: "Tesla's revenue for fiscal year 2023...",
+  vector: [0.123, -0.456, 0.789, ...],  // 1536 dims
+  documentId: "doc_uuid_456",
+  documentName: "Tesla_10K_2023.pdf",
+  companyId: "company_uuid",
+  companyTicker: "TSLA",
+  documentType: "FILING_10K",
+  fiscalYear: 2023,
+  pageNumber: 45,
+  section: "Management Discussion & Analysis",
+  chunkIndex: 12
 }
 
-// Query Example
-collection.query({
-  query_embeddings: [query_vector],
-  n_results: 5,
-  where: { ticker: "TSLA", documentType: "FILING_10K" }
-})
+// Query Example (using LanceDB)
+const results = await table
+  .vectorSearch(queryVector)
+  .limit(5)
+  .where("companyTicker = 'TSLA' AND documentType = 'FILING_10K'")
+  .toArray();
 ```
 
 ---
@@ -331,7 +334,7 @@ collection.query({
 ## Data Synchronization Strategy
 
 ### Challenge
-Data lives in two places: PostgreSQL (metadata) and ChromaDB (vectors). Must stay in sync.
+Data lives in two places: PostgreSQL (metadata) and LanceDB (vectors). Must stay in sync.
 
 ### Solution: Transaction-like Pattern
 
@@ -342,14 +345,16 @@ async function storeDocumentChunks(chunks: Chunk[]) {
     // 1. Store in PostgreSQL
     await tx.documentChunk.createMany({ data: chunks })
 
-    // 2. Store in ChromaDB
+    // 2. Store in LanceDB
     try {
-      await chromaCollection.add({
-        ids: chunks.map(c => c.id),
-        embeddings: chunks.map(c => c.embedding),
-        metadatas: chunks.map(c => c.metadata),
-        documents: chunks.map(c => c.text)
-      })
+      const lanceData = chunks.map(c => ({
+        id: c.id,
+        text: c.text,
+        vector: c.embedding,
+        ...c.metadata
+      }));
+
+      await lanceTable.add(lanceData)
 
       // 3. Mark as synced
       await tx.documentChunk.updateMany({
@@ -358,7 +363,7 @@ async function storeDocumentChunks(chunks: Chunk[]) {
       })
     } catch (error) {
       // Rollback: Prisma transaction auto-rollbacks
-      throw new Error('ChromaDB storage failed')
+      throw new Error('LanceDB storage failed')
     }
   })
 }
@@ -385,7 +390,6 @@ graph TB
     subgraph "Managed Services"
         Neon[(Neon PostgreSQL)]
         UpstashRedis[(Upstash Redis)]
-        ChromaDocker[ChromaDB<br/>Docker Container]
     end
 
     subgraph "Cloud Storage"
@@ -393,19 +397,22 @@ graph TB
     end
 
     subgraph "External APIs"
-        OpenAI[OpenAI API]
+        Grok[Grok API<br/>xAI]
+        OpenAI[OpenAI API<br/>Embeddings]
     end
 
     NextJS -->|REST API| Express
     Express --> Neon
-    Express --> ChromaDocker
     Express --> S3
+    Express --> Grok
     Express --> OpenAI
     Express --> UpstashRedis
     Workers --> UpstashRedis
     Workers --> Neon
-    Workers --> ChromaDocker
+    Workers --> Grok
     Workers --> OpenAI
+
+    Note1[LanceDB is embedded<br/>in Express/Workers<br/>No separate service]
 ```
 
 ### Infrastructure Costs (Production)
@@ -415,11 +422,14 @@ graph TB
 | Frontend | Vercel Pro | $20 |
 | Backend | Railway | $20 |
 | PostgreSQL | Neon Scale | $20-50 |
-| ChromaDB | Railway Container | $20 |
+| LanceDB | Embedded (Free) | $0 |
 | Redis | Upstash | $10 |
 | S3 Storage | AWS | $5-10 |
-| OpenAI API | Usage-based | $50-200 |
-| **Total** | | **$145-330** |
+| Grok API | xAI (Usage-based) | $30-100 |
+| OpenAI API | Embeddings only | $20-50 |
+| **Total** | | **$125-260** |
+
+**Cost Savings:** LanceDB being embedded saves ~$20/month compared to hosted ChromaDB.
 
 ---
 
@@ -438,7 +448,7 @@ graph TD
     E -->|Success| H{Generate Embeddings}
     H -->|API Error| I[Retry with Backoff]
     I -->|Still Fails| G
-    H -->|Success| J{Store in ChromaDB}
+    H -->|Success| J{Store in LanceDB}
     J -->|Fails| K[Rollback PostgreSQL]
     K --> G
     J -->|Success| L[Mark COMPLETED]
@@ -501,10 +511,11 @@ rag-investment-analyzer/
 - Job progress tracking
 - Scales with Redis
 
-### 3. Why Dual Storage (PostgreSQL + ChromaDB)?
+### 3. Why Dual Storage (PostgreSQL + LanceDB)?
 - PostgreSQL: Relations, transactions, metadata queries
-- ChromaDB: Fast vector similarity search
+- LanceDB: Fast embedded vector similarity search
 - Best tool for each job
+- LanceDB advantage: No separate server, lower latency
 
 ### 4. Why Prisma?
 - Type-safe database access
@@ -529,21 +540,24 @@ cd frontend
 npm install
 npm run dev              # Port 3000
 
-# ChromaDB (Docker)
-docker run -p 8000:8000 chromadb/chroma
-
-# Redis (Docker)
+# Redis (Docker or local)
 docker run -p 6379:6379 redis
+# Or: brew install redis && redis-server
+
+# PostgreSQL (local)
+brew install postgresql
+createdb rag_investment_db
 ```
 
 ### Environment Variables
 ```bash
 # Backend .env
-DATABASE_URL=postgresql://...
-CHROMA_URL=http://localhost:8000
+DATABASE_URL=postgresql://user@localhost:5432/rag_investment_db
+LANCEDB_PATH=./lancedb_data
 REDIS_URL=redis://localhost:6379
-OPENAI_API_KEY=sk-...
-AWS_S3_BUCKET=...
+GROK_API_KEY=xai-...
+OPENAI_API_KEY=sk-...        # For embeddings only
+AWS_S3_BUCKET=...             # Optional
 FRONTEND_URL=http://localhost:3000
 
 # Frontend .env
